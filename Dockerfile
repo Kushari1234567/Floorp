@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     git \
     &> /dev/null
 
-# Install noVNC and websockify
+# Install noVNC and websockify with full repository paths
 RUN git clone https://github.com /opt/novnc && \
     git clone https://github.com /opt/novnc/utils/websockify && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
