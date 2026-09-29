@@ -19,8 +19,8 @@ RUN git clone https://github.com /opt/novnc && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
 # Install Floorp Browser via official PPA instructions
-RUN curl -fsSL https://floorp.app | gpg --dearmor -o /usr/share/keyrings/Floorp.gpg && \
-    curl -sS --compressed -o /etc/apt/sources.list.d/Floorp.list "https://floorp.app" && \
+RUN curl -fsSL https://floorp.app | gpg --dearmor -o /usr/share/keyrings/floorp-browser.gpg && \
+    curl -fsSL https://floorp.app | tee /etc/apt/sources.list.d/floorp.list && \
     apt-get update && apt-get install -y floorp
 
 # Set environment variables for the display server
