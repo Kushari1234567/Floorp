@@ -35,8 +35,9 @@ RUN wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz \
     mv /opt/noVNC-1.6.0 /opt/novnc && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
-# Install websockify
-RUN pip3 install --no-cache-dir websockify
+# Create Python virtual environment and install websockify
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir websockify
 
 # Install Floorp
 RUN wget -O /tmp/floorp.deb \
@@ -46,13 +47,13 @@ RUN wget -O /tmp/floorp.deb \
     rm -f /tmp/floorp.deb && \
     rm -rf /var/lib/apt/lists/*
 
-# Display
+# Display configuration
 ENV DISPLAY=:1
 ENV RESOLUTION=1280x800x24
 
 EXPOSE 10000
 
-# Start desktop + Floorp + VNC + noVNC
+# Start everything
 CMD Xvfb :1 -screen 0 $RESOLUTION -ac +extension GLX +render -noreset & \
     sleep 2 && \
     openbox-session & \
@@ -61,4 +62,4 @@ CMD Xvfb :1 -screen 0 $RESOLUTION -ac +extension GLX +render -noreset & \
     sleep 3 && \
     x11vnc -display :1 -nopw -listen localhost -forever -shared & \
     sleep 2 && \
-    /usr/local/bin/websockify --web=/opt/novnc 0.0.0.0:${PORT:-10000} localhost:5900
+    /opt/venv/bin/websockify --web=/opt/novnc 0.0.0.0:${PORT:-10000} localhost:5900
