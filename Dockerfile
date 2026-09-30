@@ -39,13 +39,13 @@ RUN wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz \
 RUN python3 -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir websockify
 
-# Install Floorp
-RUN wget -O /tmp/floorp.deb \
-    https://github.com/Floorp-Projects/Floorp/releases/download/v12.18.1/floorp-12.18.1.deb && \
-    apt-get update && \
-    apt-get install -y /tmp/floorp.deb && \
-    rm -f /tmp/floorp.deb && \
-    rm -rf /var/lib/apt/lists/*
+# Install Floorp from the official Linux tarball
+RUN wget -O /tmp/floorp.tar.xz \
+    https://github.com/Floorp-Projects/Floorp/releases/download/v12.18.1/floorp-linux-x86_64.tar.xz && \
+    mkdir -p /opt/floorp && \
+    tar -xJf /tmp/floorp.tar.xz -C /opt/floorp --strip-components=1 && \
+    rm -f /tmp/floorp.tar.xz && \
+    ln -s /opt/floorp/floorp /usr/local/bin/floorp
 
 # Display configuration
 ENV DISPLAY=:1
@@ -62,4 +62,7 @@ CMD Xvfb :1 -screen 0 $RESOLUTION -ac +extension GLX +render -noreset & \
     sleep 3 && \
     x11vnc -display :1 -nopw -listen localhost -forever -shared & \
     sleep 2 && \
-    /opt/venv/bin/websockify --web=/opt/novnc 0.0.0.0:${PORT:-10000} localhost:5900
+    /opt/venv/bin/websockify \
+        --web=/opt/novnc \
+        0.0.0.0:${PORT:-10000} \
+        localhost:5900
