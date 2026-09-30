@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y \
     &> /dev/null
 
 # Install noVNC and websockify with full repository paths
-RUN git clone https://github.com /opt/novnc && \
-    git clone https://github.com /opt/novnc/utils/websockify && \
+RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
+    git clone https://github.com/novnc/websockify.git /opt/websockify && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
 # Install Floorp Browser via official PPA instructions
