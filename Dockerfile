@@ -1,40 +1,64 @@
 FROM debian:bookworm-slim
 
-# Install system dependencies, VNC, noVNC, and Openbox
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget \
-    gnupg \
     curl \
+    ca-certificates \
+    gnupg \
     xvfb \
     x11vnc \
     openbox \
     python3 \
     python3-pip \
-    git \
-    &> /dev/null
+    python3-venv \
+    libgtk-3-0 \
+    libdbus-glib-1-2 \
+    libasound2 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libdrm2 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
+    libxshmfence1 \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install noVNC and websockify with full repository paths
-RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
-    git clone https://github.com/novnc/websockify.git /opt/websockify && \
+# Install noVNC
+RUN wget -qO- https://github.com/novnc/noVNC/archive/refs/tags/v1.6.0.tar.gz \
+    | tar xz -C /opt && \
+    mv /opt/noVNC-1.6.0 /opt/novnc && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
 
-# Install Floorp Browser via official PPA instructions
-RUN curl -fsSL https://floorp.app | gpg --dearmor -o /usr/share/keyrings/floorp-browser.gpg && \
-    curl -fsSL https://floorp.app | tee /etc/apt/sources.list.d/floorp.list && \
-    apt-get update && apt-get install -y floorp
+# Install websockify
+RUN pip3 install --no-cache-dir websockify
 
-# Set environment variables for the display server
+# Install Floorp
+RUN wget -O /tmp/floorp.deb \
+    https://github.com/Floorp-Projects/Floorp/releases/download/v12.18.1/floorp-12.18.1.deb && \
+    apt-get update && \
+    apt-get install -y /tmp/floorp.deb && \
+    rm -f /tmp/floorp.deb && \
+    rm -rf /var/lib/apt/lists/*
+
+# Display
 ENV DISPLAY=:1
 ENV RESOLUTION=1280x800x24
 
 EXPOSE 10000
 
-# Start script to run everything together
-CMD Xvfb :1 -screen 0 $RESOLUTION & \
+# Start desktop + Floorp + VNC + noVNC
+CMD Xvfb :1 -screen 0 $RESOLUTION -ac +extension GLX +render -noreset & \
     sleep 2 && \
     openbox-session & \
-    sleep 1 && \
-    floorp --no-remote & \
+    sleep 2 && \
+    floorp --no-remote --disable-gpu & \
+    sleep 3 && \
     x11vnc -display :1 -nopw -listen localhost -forever -shared & \
     sleep 2 && \
-    /opt/novnc/utils/novnc_proxy --vnc localhost:5900 --listen 0.0.0.0:10000
+    /usr/local/bin/websockify --web=/opt/novnc 0.0.0.0:${PORT:-10000} localhost:5900
